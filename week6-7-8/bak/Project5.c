@@ -1,0 +1,609 @@
+#include <GL/glut.h>
+#include <math.h>
+
+#define PI 3.14159
+#define DTR PI/180
+
+GLfloat theta[] = {0.0, 0.0, 0.0};
+GLint axis = 1; 	// When we start the program, object will rotate with respect to positive y
+GLfloat size = 0.0;
+
+// Specify The Location Of Light 0
+GLfloat light0_pos[] = {1.0, 1.0, 1.0, 0.0};
+
+// Specify The Other Properties Of Light 0 Using The Struct
+typedef struct lightStruct {
+	GLfloat diffuse[4];
+	GLfloat specular[4];
+	GLfloat ambient[4];
+} lightStruct;
+
+lightStruct redLight = {
+	{0.9, 0.2, 0.2, 1.0},
+	{0.7, 0.7, 0.7, 1.0},
+	{0.1, 0.1, 0.1, 1.0}
+};
+
+lightStruct blueLight = {
+        {0.6, 0.6, 1.0, 1.0},
+        {0.5, 0.3, 0.4, 1.0},
+        {0.1, 0.1, 0.1, 1.0}
+};
+
+lightStruct yellowLight = {
+        {0.9, 0.9, 0.0, 1.0},
+        {0.7, 0.7, 0.7, 1.0},
+        {0.1, 0.1, 0.1, 1.0}
+};
+
+lightStruct *currentLight;
+
+// Defines Material Structure
+typedef struct materialStruct {
+	GLfloat ambient[4];
+	GLfloat diffuse[4];
+	GLfloat specular[4];
+	GLfloat shininess;
+} materialStruct;
+
+// Ground Material
+materialStruct ground = {
+	{0.25, 0.85, 0.25},
+	{0.40, 0.80, 0.40},
+	{0.7746, 0.9746, 0.7746},
+	10.8
+};
+
+// House Material
+materialStruct house = {
+  {0.929412, 0.923529, 0.027451, 1.0},
+  {0.980392, 0.968627, 0.113725, 1.0},
+  {0.000992157, 0.000991176, 0.000507843, 1.0},
+  10.0
+} ;
+
+// House2 Material
+materialStruct house2 = {
+  {0.029412, 0.423529, 0.427451, 1.0},
+  {0.180392, 0.668627, 0.513725, 1.0},
+  {0.192157, 0.991176, 0.707843, 1.0},
+  10.0
+} ;
+
+// Window Material
+materialStruct window = {
+	{0.1, 0.4, 0.6, 1},
+	{0.2, 0.6, 0.8, 1},
+	{0.6, 0.9, 1.0, 1},
+	90.0
+};
+
+// Door Material
+materialStruct door = {
+        {0.7, 0.3, 0.1, 1},
+        {0.8, 0.4, 0.2, 1},
+        {1.0, 0.5, 0.3, 1},
+        10.0
+};
+
+// White Material
+materialStruct white = {
+        {0.6, 0.6, 0.6, 1},
+        {0.9, 0.9, 0.9, 1},
+        {0.01, 0.01, 0.01, 1},
+        10.0
+};
+
+// Yellow Material
+materialStruct yellow = {
+        {0.4, 0.4, 0.0, 1},
+        {0.6, 0.6, 0.1, 1},
+        {0.6, 0.6, 0.3, 1},
+        10.0
+};
+
+// Chimney Material
+materialStruct chimney = {
+        {0.7, 0.5, 0.3, 1},
+        {0.8, 0.6, 0.4, 1},
+        {0.0, 0.0, 0.0, 1},
+        5.0
+};
+
+// Greenery Material
+materialStruct greenery = {
+        {0.0, 0.2, 0.0, 1},
+        {0.0, 0.4, 0.0, 1},
+        {0.0, 0.6, 0.0, 1},
+        10.0
+};
+
+// Green Pants Material
+materialStruct greenpants = {
+        {0.0, 0.2, 0.0, 1},
+        {0.1, 0.2, 0.1, 1},
+        {0.00000001746, 0.0000000746, 0.00000001746, 1},
+        10.0
+};
+
+// Skin Color
+materialStruct skincolor = {
+        {0.4, 0.4, 0.1, 1},
+        {0.95, 0.69, 0.12, 1},
+        {0.0000005, 0.0000001, 0.0000001, 1},
+        10.0
+};
+
+// Skin Color2
+materialStruct skincolor2 = {
+        {0.8, 0.8, 0.3, 1},
+        {0.85, 0.79, 0.22, 1},
+        {0.9, 0.8, 0.5, 1},
+        10.0
+};
+
+// Black
+materialStruct black = {
+        {0.0, 0.0, 0.0, 1},
+        {0.3, 0.3, 0.3, 1},
+        {0.7, 0.7, 0.7, 1},
+        10.0
+};
+
+// Brown
+materialStruct brown = {
+        {0.4, 0.2, 0.0, 1},
+        {0.6, 0.4, 0.2, 1},
+        {0.8, 0.8, 0.5, 1},
+        10.0
+};
+
+materialStruct *currentMaterial;
+
+void materials(materialStruct *materials) {
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materials -> ambient);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materials -> diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materials -> specular);
+}
+
+
+void objects() {
+
+	glLineWidth(10.0);
+	glRotatef(10, 1, 0, 0);
+	glRotatef(345, 0, 1, 0);
+
+	// Ground
+	glPushMatrix();
+		materials(&ground);
+		glTranslatef(0.0, -4.0, 0.0);
+		glScalef(15.0, 1.0, 15.0);
+		glutSolidCube(1.0);
+	glPopMatrix();
+
+	// House Walls
+	// ######### MAIN BUILDING
+	glPushMatrix();
+		materials(&house);
+		glScalef(1.6, 0.8, 1.2);
+		glTranslatef(0.0, -2.0, 0.0);
+		glutSolidCube(5.0);
+	glPopMatrix();
+
+	glPushMatrix();
+		materials(&house);
+		glRotatef(45, 1, 0, 0);
+		glScalef(1.8, 1.0, 1.0);
+		glutSolidCube(4.3);
+	glPopMatrix();
+
+        glPushMatrix();
+                materials(&house2);
+                glRotatef(45, 1, 0, 0);
+		glScalef(1.75, 1.0, 1.0);
+		glTranslatef(0.0, 0.2, -0.2);
+                glutSolidCube(4.4);
+        glPopMatrix();
+
+	// ########### SIDE BUILDING
+        glPushMatrix();
+                materials(&house);
+                glScalef(0.6, 0.8, 1.2);
+                glTranslatef(8.0, -3.0, 0.0);
+                glutSolidCube(3.0);
+        glPopMatrix();
+
+        glPushMatrix();
+                materials(&house);
+                glRotatef(45, 1, 0, 0);
+                glScalef(0.6, 1.0, 1.0);
+		glTranslatef(8.0, -1.0, 1.0);
+                glutSolidCube(2.6);
+        glPopMatrix();
+
+       glPushMatrix();
+                materials(&house2);
+                glRotatef(45, 1, 0, 0);
+                glScalef(0.57, 1.0, 1.0);
+                glTranslatef(8.3, -0.8, 0.9);
+                glutSolidCube(2.6);
+        glPopMatrix();
+
+	// ########## GARAGE
+        glPushMatrix();
+                materials(&house);
+                glScalef(0.6, 0.8, 1.2);
+                glTranslatef(-8.0, -3.0, 0.0);
+                glutSolidCube(3.0);
+        glPopMatrix();
+
+        glPushMatrix();
+                materials(&house);
+                glRotatef(45, 1, 0, 0);
+                glScalef(0.6, 1.0, 1.0);
+                glTranslatef(-8.0, -1.0, 1.0);
+                glutSolidCube(2.6);
+        glPopMatrix();
+
+        glPushMatrix();
+                materials(&house2);
+                glRotatef(45, 1, 0, 0);
+                glScalef(0.57, 1.0, 1.0);
+                glTranslatef(-8.3, -0.8, 0.9);
+                glutSolidCube(2.6);
+        glPopMatrix();
+
+	// ########## ROOF
+	glPushMatrix();
+		materials(&house);
+		glTranslatef(2.0, 1.5, 1.5);
+		glutSolidCube(2.0);
+		glTranslatef(-4.0, 0.0, 0.0);
+		glutSolidCube(2.0);
+	glPopMatrix();
+
+        glPushMatrix();
+                materials(&house);
+		glRotatef(45, 0, 0, 1);
+                glTranslatef(3.1, 0.3, 1.7);
+                glutSolidCube(1.5);
+                glTranslatef(-2.8, 2.8, 0.0);
+                glutSolidCube(1.5);
+        glPopMatrix();
+
+        glPushMatrix();
+                materials(&house2);
+                glRotatef(45, 0, 0, 1);
+                glTranslatef(3.2, 0.4, 1.68);
+                glutSolidCube(1.5);
+                glTranslatef(-2.8, 2.8, 0.0);
+                glutSolidCube(1.5);
+        glPopMatrix();
+
+	// DOOR
+	glPushMatrix();
+		materials(&door);
+		glScalef(1.0, 2.0, 1.0);
+		glTranslatef(0.0, -1.3, 2.6);
+		glutSolidCube(1.0);
+		materials(&white);
+		glTranslatef(0.0, 0.0, -0.1);
+		glutSolidCube(1.15);
+	glPopMatrix();
+	glPushMatrix();
+		materials(&white);
+		glRotatef(45, 0, 0, 1);
+		glTranslatef(-1.0, -1.0, 2.75);
+		glutSolidCube(0.6);
+		materials(&door);
+		glTranslatef(0.0, 0.0, -0.1);
+		glutSolidCube(0.75);
+	glPopMatrix();
+	glPushMatrix();
+		materials(&white);
+		glTranslatef(0.0, -3.75, 3.25);
+		glutSolidCube(1.0);
+	glPopMatrix();
+	// PATH & GARAGE
+	glPushMatrix();
+		materials(&white);
+		glTranslatef(0.0, -3.95, 5.0);
+		glScalef(1.0, 1.0, 4.0);
+		glutSolidCube(1.0);
+		glTranslatef(-4.75, 0.0, -0.1);
+		glScalef(2.0, 1.0, 1.35);
+		glutSolidCube(1.0);
+	glPopMatrix();
+	glPushMatrix();
+		materials(&white);
+		glTranslatef(-4.6, -2.5, 1.4);
+		glScalef(1.0, 1.0, 0.5);
+		glutSolidCube(1.95);
+	glPopMatrix();
+
+	// Front Bottom Windows
+	glPushMatrix();
+		materials(&window);
+		glTranslatef(-2.0, -2.0, 2.4);
+		glutSolidCube(1.35);
+		glTranslatef(4.0, 0.0, 0.0);
+		glutSolidCube(1.35);
+	glPopMatrix();
+	glPushMatrix();
+		materials(&yellow);
+		glTranslatef(-2.0, -2.0, 2.5);
+		glScalef(0.1, 1.0, 1.0);
+		glutSolidCube(1.35);
+		glTranslatef(-7.5, 0.0, 0.0);
+		glutSolidCube(1.35);
+		glTranslatef(15.0, 0.0, 0.0);
+		glutSolidCube(1.35);
+		glTranslatef(40.0, 0.0, 0.0);
+		glutSolidCube(1.35);
+		glTranslatef(-15, 0.0, 0.0);
+		glutSolidCube(1.35);
+		glTranslatef(7.5, 0.0, 0.0);
+		glutSolidCube(1.35);
+	glPopMatrix();
+        glPushMatrix();
+                materials(&yellow);
+                glTranslatef(-2.0, -2.0, 2.5);
+                glScalef(1.0, 0.1, 1.0);
+                glutSolidCube(1.35);
+                glTranslatef(4.0, 0.0, 0.0);
+                glutSolidCube(1.35);
+		glTranslatef(0.0, 6.0, 0.0);
+		glutSolidCube(1.35);
+		glTranslatef(0.0, -12.0, 0.0);
+		glutSolidCube(1.35);
+		glTranslatef(-4.0, 0.0, 0.0);
+		glutSolidCube(1.35);
+		glTranslatef(0.0, 12.0, 0.0);
+		glutSolidCube(1.35);
+        glPopMatrix();
+	glPushMatrix();
+		materials(&yellow);
+		glTranslatef(-3.075, -2.0, 2.9);
+		glScalef(1.0, 2.7, 1.0);
+		glutSolidCube(0.5);
+		glTranslatef(2.15, 0.0, 0.0);
+		glutSolidCube(0.5);
+		glTranslatef(1.85, 0.0, 0.0);
+		glutSolidCube(0.5);
+		glTranslatef(2.15, 0.0, 0.0);
+		glutSolidCube(0.5);
+	glPopMatrix();
+
+	// Front Top Windows
+        glPushMatrix();
+                materials(&window);
+                glTranslatef(-2.0, 1.8, 1.9);
+                glutSolidCube(1.35);
+                glTranslatef(4.0, 0.0, 0.0);
+                glutSolidCube(1.35);
+        glPopMatrix();
+        glPushMatrix();
+                materials(&yellow);
+                glTranslatef(-2.0, 1.8, 1.95);
+                glScalef(0.1, 1.0, 1.0);
+                glutSolidCube(1.35);
+                glTranslatef(-7.5, 0.0, 0.0);
+                glutSolidCube(1.35);
+                glTranslatef(15.0, 0.0, 0.0);
+                glutSolidCube(1.35);
+                glTranslatef(40.0, 0.0, 0.0);
+                glutSolidCube(1.35);
+                glTranslatef(-15, 0.0, 0.0);
+                glutSolidCube(1.35);
+                glTranslatef(7.5, 0.0, 0.0);
+                glutSolidCube(1.35);
+        glPopMatrix();
+        glPushMatrix();
+                materials(&yellow);
+                glTranslatef(-2.0, 1.8, 1.95);
+                glScalef(1.0, 0.1, 1.0);
+                glutSolidCube(1.35);
+                glTranslatef(4.0, 0.0, 0.0);
+                glutSolidCube(1.35);
+		glTranslatef(0.0, 6.0, 0.0);
+		glutSolidCube(1.35);
+		glTranslatef(0.0, -12.0, 0.0);
+		glutSolidCube(1.35);
+		glTranslatef(-4.0, 12.0, 0.0);
+		glutSolidCube(1.35);
+		glTranslatef(0.0, -12.0, 0.0);
+		glutSolidCube(1.35);
+        glPopMatrix();
+
+	// TREE
+	glPushMatrix();
+		materials(&brown);
+		glTranslatef(6.5, 0.0, -6.5);
+		glScalef(1.0, 7.0, 1.0);
+		glutSolidCube(1.0);
+	glPopMatrix();
+	glPushMatrix();
+		materials(&greenery);
+		glTranslatef(6.5, 5.0, -6.5);
+		glScalef(1.75, 1.0, 2.0);
+		glutSolidSphere(2.2, 100, 100);
+	glPopMatrix();
+
+	// CHIMNEY
+	glPushMatrix();
+		materials(&chimney);
+		glTranslatef(2.5, 3.0, -0.35);
+		glScalef(0.7, 2.0, 0.7);
+		glutSolidCube(1.0);
+	glPopMatrix();
+
+	// BUSHES
+	glPushMatrix();
+		materials(&greenery);
+		glTranslatef(-3.0, -3.35, 3.5);
+		glScalef(1.5, 1.0, 1.0);
+		glutSolidSphere(0.65, 100, 100);
+		glTranslatef(1.0, 0.0, 0.0);
+		glutSolidSphere(0.65, 100, 100);
+		glTranslatef(2.0, 0.0, 0.0);
+		glutSolidSphere(0.65, 100, 100);
+		glTranslatef(1.0, 0.0, 0.0);
+		glutSolidSphere(0.65, 100, 100);
+		glTranslatef(1.05, 0.0, -1.0);
+		glScalef(0.75, 1.0, 2.0);
+		glutSolidSphere(0.65, 100, 100);
+        glPopMatrix();
+
+	// ############## PERSON
+	// BODY
+	glPushMatrix();
+		glTranslatef(2.0, -0.45, 2.0);
+		materials(&white);
+		glTranslatef(0.0, -2.0, 4.0);
+		glScalef(0.5, 0.8, 0.5);
+		glutSolidSphere(1.0, 100, 100);
+	glPopMatrix();
+	// Arms
+	glPushMatrix();
+                glTranslatef(2.0, 0.0, 2.0);
+		materials(&skincolor);
+		glRotatef(35, 0, 0, 1);
+		glTranslatef(-1.0, -2.0, 4.0);
+		glScalef(0.2, 0.6, 0.2);
+		glutSolidSphere(1.0, 100, 100);
+	glPopMatrix();
+	glPushMatrix();
+                glTranslatef(2.0, 0.0, 2.0);
+		materials(&skincolor);
+		glRotatef(-35, 0, 0, 1);
+		glTranslatef(1.0, -2.0, 4.0);
+		glScalef(0.2, 0.6, 0.2);
+		glutSolidSphere(1.0, 100, 100);
+	glPopMatrix();
+	// Legs
+	glPushMatrix();
+		glTranslatef(2.0, 0.0, 2.0);
+		materials(&greenpants);
+		glTranslatef(0.25, -3.0, 4.0);
+		glScalef(0.2, 0.6, 0.2);
+		glutSolidSphere(1.0, 100, 100);
+		glTranslatef(-2.35, 0.0, 0.0);
+		glutSolidSphere(1.0, 100, 100);
+	glPopMatrix();
+	// Head
+	glPushMatrix();
+		glTranslatef(2.0, -1.4, 6.0);
+		materials(&skincolor2);
+		glutSolidSphere(0.3, 100, 100);
+		materials(&brown);
+		glTranslatef(0.0, 0.1, 0.0);
+		glutSolidSphere(0.25, 100, 100);
+	glPopMatrix();
+	// Eyes & Mouth
+	glPushMatrix();
+		glTranslatef(1.9, -1.3, 6.3);
+		materials(&white);
+		glutSolidSphere(0.05, 100, 100);
+		glTranslatef(0.2, 0.0, 0.0);
+		glutSolidSphere(0.05, 100, 100);
+		materials(&black);
+		glTranslatef(-0.1, -0.15, -0.05);
+		glRotatef(10, 0, 0, 1);
+		glScalef(2.0, 1.0, 1.0);
+		glutSolidSphere(0.075, 100, 100);
+	glPopMatrix();
+
+}
+
+// Added For Lighting Effects
+void init() {
+	glClearColor(0.4, 0.8, 1.0, 0.0);	// Blue Background
+
+	// Eyes at 1, 1, 1, object at 0, 0, 0, and up is in y direction
+	gluLookAt(1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+
+	glEnable(GL_LIGHTING);			// Enable The Lighting
+	glEnable(GL_LIGHT0);			// Light Source Number 0
+
+	currentLight = &blueLight;
+
+	glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, currentLight -> specular);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, currentLight -> diffuse);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, currentLight -> ambient);
+
+	currentMaterial = &house;
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, currentMaterial -> diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, currentMaterial -> specular);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, currentMaterial -> ambient);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, currentMaterial -> shininess);
+}
+
+void display() {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glLoadIdentity();
+
+		// Rotations
+		glRotatef(theta[0], 1.0, 0.0, 0.0);		// Rotate object with respect to x axis
+		glRotatef(theta[1], 0.0, 1.0, 0.0);		// Rotate object with respect to y axis
+		glRotatef(theta[2], 0.0, 0.0, 1.0);		// Rotate object with respect to z axis
+		objects();
+        glFlush();
+	glutSwapBuffers();
+}
+
+void idle() {
+	// Increments theta when called
+	theta[axis] += 1;
+	if(theta[axis] > 360.0) {
+		theta[axis] -= 360;
+	}
+	glutPostRedisplay();
+}
+
+void reshape(int w, int h) {
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	if(w <= h) {
+		glOrtho(-6.0, 6.0, -6.0*(GLfloat) h / (GLfloat) w,
+			6.0*(GLfloat) h / (GLfloat) w, -10.0, 10.0);
+	} else {
+		glOrtho(-6.0*(GLfloat) w/(GLfloat) h, 6.0 * (GLfloat) w/ (GLfloat) h,
+			-6.0, 6.0, -10.0, 10.0);
+	}
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void myKeyboard(unsigned char key, int x, int y) {
+	if(key == 'r') glutIdleFunc( idle );
+	if(key == 's') glutIdleFunc( NULL );
+	if(key == 'q') exit(0);
+}
+
+void myMouse(int btn, int state, int x, int y) {
+	if(btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN) axis = 1;
+	if(btn == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN) axis = 1;
+	if(btn == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) axis = 1;
+}
+
+int main(int argc, char** argv) {
+        glutInit(&argc, argv);
+
+        // Windowing:
+        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+        glutInitWindowSize(500, 500);
+        glutInitWindowPosition(0.0, 0.0);
+
+        glutCreateWindow("My House");
+        glutDisplayFunc(display);
+
+	glutReshapeFunc( reshape );
+//	glutIdleFunc( idle );
+	glutKeyboardFunc( myKeyboard );
+	glutMouseFunc( myMouse );
+	glEnable(GL_DEPTH_TEST);	// Enables 3D in OPENGL
+	init();
+        glutMainLoop();
+}
