@@ -4,19 +4,23 @@
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #define PI 3.14159
 #define DTR PI/180
 
-GLfloat theta[] = {0.0, 0.0, 0.0};
-GLint axis = 1; 	// When we start the program, object will rotate with respect to positive y
-GLfloat size = 0.0;
-
-// x and y values of the current block:
+// x and y values of the single block:
 double x1 = 0, y2 = 0;
+
+// x and y values of the other blocks
+double x3[7], y3[7];
 
 // Array containing block values for each column
 int yHeights[10];
+int yHindex = 0;
+
+// Array containing the real graphical y values of each colomn
+double yHeightsReal[10];
 
 // Specify The Location Of Light 0
 GLfloat light0_pos[] = {1.0, 1.0, 1.0, 0.0};
@@ -50,7 +54,7 @@ typedef struct materialStruct {
 	GLfloat shininess;
 } materialStruct;
 
-// Moon Material
+// White Material
 materialStruct White = {
         {0.65, 0.65, 0.65},
         {0.80, 0.80, 0.80},
@@ -66,6 +70,14 @@ materialStruct Black = {
         100.0
 };
 
+// Dark Grey Material
+materialStruct Dark_Grey = {
+        {0.0, 0.0, 0.0},
+        {0.1, 0.1, 0.1},
+        {0.3, 0.3, 0.3},
+        100.0
+};
+
 materialStruct *currentMaterial;
 void materials(materialStruct *materials) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materials -> ambient);
@@ -73,21 +85,134 @@ void materials(materialStruct *materials) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materials -> specular);
 }
 
-void objects() {
-/*
-    glPushMatrix();
-        glTranslatef(1.75, 0.0, 0.0);
-        //glRotatef((GLfloat)rightLeg2, 0.0, 1.0, 0.0);
-        glTranslatef(1.75, 0.0, 0.0);
+// Resets game
+void resetGame() {
+        for(int i=0; i<20; i++) {
+                yHeights[i] = 0;
+        }
+}
+
+void Single_Block() {
+        // Draws the falling block
+        materials(&White);
         glPushMatrix();
-                glScalef(2.0, 0.9, 0.9);
-                glutSolidSphere(1.75, 100, 100);
+                glTranslatef(1, 19.825, 0);
+                glTranslatef((GLfloat)x1, (GLfloat)y2, 0);
+                glutSolidCube(2.0);
         glPopMatrix();
 
-    glPopMatrix();
-*/
+        // Check for rows to clear
+        int min = yHeights[0];
+        for(int i=0; i<10; i++) {
+                if(yHeights[i] < min) {
+                        min = yHeights[i];
+                }
+        }
+        // Clear minimum number of rows to be cleared
+        for(int i=0; i<10; i++) {
+                yHeights[i] -= min;
+        }
+
+        // If the height in any of the indexes exceeds 20,
+        // then the game is lost and the game resets
+        for(int i=0; i<10; i++) {
+                if(yHeights[i] > 21) {
+                        resetGame();
+                }
+        }
+
+        // Draws Permanent Blocks
+        int xVal = 0, yVal = 0;
+        for(int i=0; i<10; i++) {
+                for(int j=0; j<yHeights[i]; j++) {
+                        glPushMatrix();
+                                xVal -= 5;
+                                xVal = i * 2.1;
+                                xVal -= 9;
+                                yVal = j * 2.1; 
+                                yVal -= 20;
+                                glTranslatef(xVal, yVal, 0);
+                                glutSolidCube(2.0);
+                        glPopMatrix();
+                }
+        }
+}
+
+// x4 y4
+void I_Block() {
+       // Draws the falling block
+        materials(&White);
+        glPushMatrix();
+                glTranslatef(1, 19.825, 0);
+                //glTranslatef((GLfloat)x4[0], (GLfloat)y4[0], 0);
+                glutSolidCube(2.0);
+        glPopMatrix();
+
+        // Check for rows to clear
+        int min = yHeights[0];
+        for(int i=0; i<10; i++) {
+                if(yHeights[i] < min) {
+                        min = yHeights[i];
+                }
+        }
+        // Clear minimum number of rows to be cleared
+        for(int i=0; i<10; i++) {
+                yHeights[i] -= min;
+        }
+
+        // If the height in any of the indexes exceeds 20,
+        // then the game is lost and the game resets
+        for(int i=0; i<10; i++) {
+                if(yHeights[i] > 21) {
+                        resetGame();
+                }
+        }
+
+        // Draws Permanent Blocks
+        int xVal = 0, yVal = 0;
+        for(int i=0; i<10; i++) {
+                for(int j=0; j<yHeights[i]; j++) {
+                        glPushMatrix();
+                                xVal -= 5;
+                                xVal = i * 2.1;
+                                xVal -= 9;
+                                yVal = j * 2.1; 
+                                yVal -= 20;
+                                glTranslatef(xVal, yVal, 0);
+                                glutSolidCube(2.0);
+                        glPopMatrix();
+                }
+        }
+}
+void J_Block() {
+
+}
+void L_Block() {
+
+}
+void O_Block() {
+
+}
+void S_Block() {
+
+}
+void T_Block() {
+
+}
+void Z_Block() {
+        
+}
+
+// Draws the initial game
+void drawGame() {
+        // Initializes the 7 blocks
+        for(int i=0; i<7; i++) {
+                x3[i] = 0;
+                y3[i] = 0;
+        }
+
         // Box for the game
-        glLineWidth(10.0);
+        glLineWidth(3.0);
         materials(&White);
         glBegin(GL_LINE_LOOP);
                 glVertex2f(10.75, 21.2);
@@ -95,7 +220,13 @@ void objects() {
                 glVertex2f(-10.75, -21.2);
                 glVertex2f(-10.75, 21.2);
         glEnd();
-
+        materials(&Dark_Grey);
+        glBegin(GL_POLYGON);
+                glVertex2f(10.75, 21.2);
+                glVertex2f(10.75, -21.2);
+                glVertex2f(-10.75, -21.2);
+                glVertex2f(-10.75, 21.2);
+        glEnd();
         // Test For Filling the box
         materials(&Black);
         glPushMatrix();
@@ -109,46 +240,19 @@ void objects() {
                 }
         glPopMatrix();
 
-        materials(&White);
-        glPushMatrix();
-                glTranslatef(1, 19.825, 0);
-                glTranslatef((GLfloat)x1, (GLfloat)y2, 0);
-                glutSolidCube(2.0);
-        glPopMatrix();
-
-        // Check if for rows to clear
-        int min = yHeights[0];
-        for(int i=0; i<10; i++) {
-                if(yHeights[i] < min) {
-                        min = yHeights[i];
-                }
-        }
-
-        // Clear minimum number of rows to be cleared
-        for(int i=0; i<10; i++) {
-                yHeights[i] -= min;
-        }
-
-        // Draws Permanent Blocks
-        int xVal = 0, yVal = 0;
-        for(int i=0; i<10; i++) {
-                for(int j=0; j<yHeights[i]; j++) {
-                        glPushMatrix();
-                                xVal = i * 2.1;
-                                xVal -= 6.5;
-                                yVal = j * 2.1; 
-                                yVal -= 20;
-                                glTranslatef(xVal, yVal, 0);
-                                glutSolidCube(2.0);
-                        glPopMatrix();
-                }
-        }
-
+        Single_Block();
+//        I_Block();
+//        J_Block();
+//        L_Block();
+//        O_Block();
+//        S_Block();
+//        T_Block();
+//        Z_Block();
 }
 
 // Added For Lighting Effects
 void init() {
-	glClearColor(0.0, 0.1, 0.3, 0.0);	// Space Background
+	glClearColor(0.3, 0.3, 0.3, 0.0);	// Grey Background
 
 	// Eyes at 1, 1, 1, object at 0, 0, 0, and up is in y direction
 	gluLookAt(1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
@@ -174,39 +278,35 @@ void init() {
 void display() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glLoadIdentity();
-
-		// Rotations
-		glRotatef(theta[0], 1.0, 0.0, 0.0);		// Rotate object with respect to x axis
-		glRotatef(theta[1], 0.0, 1.0, 0.0);		// Rotate object with respect to y axis
-		glRotatef(theta[2], 0.0, 0.0, 1.0);		// Rotate object with respect to z axis
-		objects();
+                //Draws the initial game
+		drawGame();
         glFlush();
 	glutSwapBuffers();
 }
 
-// Requires user input (keyboard or mouse)
-void idle() {
-	// Increments theta when called
-	theta[axis] += 1.25;
-	if(theta[axis] > 360.0) {
-		theta[axis] -= 360;
-	}
-	glutPostRedisplay();
-}
-
 // Autostarts without user input
 void myIdle() {
-        // Guesses random number, when correct, it ticks the game (I knopw it sucks)
+        // Guesses random number, when correct, it ticks the game (I know it sucks)
         float num = (float)rand()/(float)(RAND_MAX) * 2.0;
         float num2 = (float)rand()/(float)(RAND_MAX) * 2.0;
-        if(((num > 0.0 && num < 0.2) || (num2 > 0.0 && num2 < 0.2)) && y2 > -39.0) {
+        float num3 = (float)rand()/(float)(RAND_MAX) * 2.0;
+        float num4 = (float)rand()/(float)(RAND_MAX) * 2.0;
+        if(((num > 0.0 && num < 0.1) || (num2 > 0.0 && num2 < 0.1) || (num3 > 0.0 && num3 < 0.1) || (num3 > 0.0 && num3 < 0.1)) && y2 > -39.0) {
                 y2 -= 1.05;
         }
-        if(y2 <= -39) {
-                int yHindex = x1 + 12.6;
+        int temp = x1 + 12.6;
+        temp /= 2.1;
+        if(x1 == 8.4) {
+                temp = 9;
+        }
+        if(y2 <= (-39 + (yHeights[temp] * 2.1))) {
+                yHindex = x1 + 12.6;
                 yHindex /= 2.1;
-                yHindex -= 1;
+                if(x1 == 8.4) {
+                        yHindex = 9;
+                }
                 yHeights[yHindex] += 1;
+                yHeightsReal[yHindex] += 2.1;                
                 x1 = 0, y2 = 0;
         }
         glutPostRedisplay();
@@ -234,14 +334,25 @@ void reshape(int w, int h) {
 void myKeyboard(unsigned char key, int x, int y) {
         if(key == 'q' || key == 27) exit(0);
         if(key == 'p') glutIdleFunc( NULL );
+        int temp = x1 + 12.6;
+        temp /= 2.1;
+        if(x1 == 8.4) {
+                temp = 9;
+        }
+
         if(y2 > -39) {
                 switch (key) {
                 case 'd':
-                        x1 += 2.1;
+                        //printf("y2 %lf\n", y2);
+                        //printf("temp %d\n", temp);
+                        //printf("yHeights %lf\n", yHeightsReal[temp]-39);
+                        if(x1 < 8 && y2 >= (yHeightsReal[temp+1]-39))
+                                x1 += 2.1;
                         glutPostRedisplay();
                         break;
                 case 'a':
-                        x1 -= 2.1;
+                        if(x1 > -10 && y2 >= (yHeightsReal[temp-1]-39))
+                                x1 -= 2.1;
                         glutPostRedisplay();
                         break;
                 case 'w':
@@ -253,12 +364,6 @@ void myKeyboard(unsigned char key, int x, int y) {
                         break;
                 }
         }
-}
-
-void myMouse(int btn, int state, int x, int y) {
-	if(btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN) axis = 0;
-	if(btn == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN) axis = 1;
-	if(btn == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) axis = 2;
 }
 
 int main(int argc, char** argv) {
@@ -276,7 +381,6 @@ int main(int argc, char** argv) {
 
 	glutReshapeFunc( reshape );
 	glutKeyboardFunc( myKeyboard );
-	glutMouseFunc( myMouse );
 	glEnable(GL_DEPTH_TEST);	// Enables 3D in OPENGL
 	init();
         glutMainLoop();
